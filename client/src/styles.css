@@ -7,3 +7,26 @@
 @media(max-width:900px){.sidebar{transform:translateX(-100%);transition:transform .22s ease;box-shadow:none}.sidebar.sidebar-open{transform:translateX(0);box-shadow:15px 0 40px rgba(20,40,26,.1)}.main-area{margin-left:0}.mobile-menu-button{display:grid}.mobile-scrim{display:block;position:fixed;inset:0;border:0;background:rgba(18,32,23,.28);z-index:15}.topbar{gap:12px;padding:0 22px}.breadcrumb{margin-right:auto}.stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.content-grid{grid-template-columns:1fr}.low-stock-panel{order:2}.today-label{display:none}}
 @media(max-width:600px){.topbar{height:62px;padding:0 15px}.page-content{padding:24px 14px 14px}.welcome-row{align-items:flex-start;flex-direction:column;margin-bottom:22px;gap:16px}.welcome-row h1{font-size:25px}.page-heading{flex-direction:row;align-items:center;flex-wrap:wrap}.page-heading .welcome-actions{width:100%}.page-heading .welcome-actions .button{flex:1}.welcome-actions{width:100%}.welcome-actions .button{flex:1}.stats-grid{gap:10px}.stat-card{padding:14px 13px;min-height:145px}.stat-icon{width:34px;height:34px;margin-bottom:12px}.stat-value{font-size:23px}.stat-note{line-height:1.4}.panel-heading{padding:17px 15px 14px}.content-grid{gap:13px}.data-table th{font-size:8px}.data-table th:first-child,.data-table td:first-child{padding-left:12px}.data-table th,.data-table td{padding-left:9px;padding-right:9px}.product-cell{min-width:140px}.product-initial{width:30px;height:30px}.category-tag{font-size:9px}.filter-row{flex-direction:column}.search-box{max-width:none;flex:auto;width:100%}.category-select{width:100%}.table-heading{padding:16px 14px}.table-label{font-size:8px}.page-footer{align-items:flex-start;flex-direction:column;padding-top:14px}.modal{padding:20px 17px}.modal-heading h2{font-size:20px}.breadcrumb{font-size:11px}.breadcrumb span{margin:0 5px}.topbar-right{gap:0}.top-avatar{width:29px;height:29px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* Barcode Scanner, Offline, AI Restock & Role Access Styling */
+.camera-viewfinder-container{position:relative;width:100%;height:220px;border-radius:12px;overflow:hidden;background:#18201a;display:flex;align-items:center;justify-content:center}
+.video-wrapper{position:relative;width:100%;height:100%}
+.camera-stream{width:100%;height:100%;object-fit:cover}
+.laser-guide{position:absolute;inset:20px;border:2px dashed rgba(255,255,255,.45);border-radius:8px;pointer-events:none}
+.laser-beam{width:100%;height:2px;background:#ff3333;box-shadow:0 0 8px #ff3333;animation:laserScan 2s infinite ease-in-out}
+@keyframes laserScan{0%{transform:translateY(0)}50%{transform:translateY(170px)}100%{transform:translateY(0)}}
+.camera-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;color:#8ba091;text-align:center;padding:20px;gap:12px}
+.scanner-icon-pulse{color:#258454;animation:pulseIcon 2s infinite}
+@keyframes pulseIcon{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+.quick-barcodes{margin-top:10px}
+.barcode-chip{border:1px solid #d4dfd7;background:#fff;border-radius:6px;padding:4px 8px;font-size:10px;color:#3b4c41;transition:background .15s}
+.barcode-chip:hover{background:#eef6f0;border-color:#a5cfb4;color:#1e6a40}
+.role-pill{display:inline-flex;align-items:center;gap:5px;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700}
+.role-admin{background:#e7f4eb;color:#1c7040;border:1px solid #c7e6d2}
+.role-staff{background:#eaf2fb;color:#285791;border:1px solid #cbe0f8}
+.role-select{height:30px;font-size:11px;border-radius:6px;border:1px solid #dbe3dc;background:#fff;padding:0 6px;color:#304035;cursor:pointer}
+.offline-banner{background:#fff8eb;border:1px solid #fed7aa;color:#9a3412;display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-radius:8px;font-size:11px;margin-bottom:14px}
+.offline-dot-active{width:7px;height:7px;border-radius:50%;background:#e06d10;display:inline-block;animation:pulseDot 1.5s infinite}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-badge{background:#e06d10;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:5px}
+.capacity-pill{background:#f3f7f4;border:1px solid #dce8df;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:600;color:#45564c}
