@@ -181,7 +181,7 @@ export default function App() {
   async function handleDeleteProduct(product) {
     // Role-based permission guard
     if (currentRole !== 'admin') {
-      setError('Staff permission: Only Administrators can delete products from inventory.');
+      setError('Staff role restriction: Only Administrators can delete products from inventory. To delete, switch your active role to Admin in the bottom-left sidebar.');
       return;
     }
 
@@ -936,9 +936,9 @@ function ProductTable({ products, onEdit, onDelete, onSell, currentRole, compact
                     ) : (
                       <button
                         className="icon-button"
-                        style={{ opacity: 0.35, cursor: 'not-allowed' }}
-                        disabled
-                        title="Staff role cannot delete products"
+                        style={{ opacity: 0.45, cursor: 'pointer' }}
+                        onClick={() => onDelete(product)}
+                        title="Staff role: Only Administrators can delete (click to view details)"
                       >
                         <Trash2 size={15} />
                       </button>

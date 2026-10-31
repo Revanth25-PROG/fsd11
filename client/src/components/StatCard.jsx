@@ -1,26 +1,24 @@
+import React from 'react';
+import { Package, Boxes, AlertTriangle, IndianRupee } from 'lucide-react';
 
-import React from "react";
+const iconMap = {
+  products: Package,
+  units: Boxes,
+  low: AlertTriangle,
+  sales: IndianRupee
+};
 
-function StatCard({ title, value, icon, color }) {
+export default function StatCard({ type = 'products', title, value, note }) {
+  const Icon = iconMap[type] || Package;
+
   return (
     <div className="stat-card">
-      <div className="stat-card-content">
-        <div>
-          <p className="stat-card-title">{title}</p>
-          <h2 className="stat-card-value">{value ?? 0}</h2>
-        </div>
-
-        <div
-          className="stat-card-icon"
-          style={{
-            backgroundColor: color || "#e8f5e9",
-          }}
-        >
-          {icon}
-        </div>
+      <div className={`stat-icon ${type}`}>
+        <Icon size={20} />
       </div>
+      <p className="stat-title">{title}</p>
+      <div className="stat-value">{value ?? 0}</div>
+      {note && <p className="stat-note">{note}</p>}
     </div>
   );
 }
-
-export default StatCard;
