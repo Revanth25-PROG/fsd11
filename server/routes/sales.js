@@ -24,7 +24,8 @@ router.get('/', async (req, res) => {
       Sale.countDocuments(query)
     ]);
 
-    res.json({ sales, totalSalesCount });
+    res.set('X-Total-Sales-Count', totalSalesCount);
+    res.json(sales);
   } catch (error) {
     res.status(500).json({ message: 'Could not load sales history.' });
   }

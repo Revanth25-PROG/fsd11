@@ -71,8 +71,7 @@ function handleOfflineFallback(path, options, originalError) {
   if (method === 'GET') {
     if (path.startsWith('/products')) {
       const cached = offlineDb.get(offlineDb.KEYS.PRODUCTS);
-      if (cached) return { ...cached, _isOffline: true };
-      return { products: [], totalCount: 0, _isOffline: true };
+      return Array.isArray(cached) ? cached : (Array.isArray(cached?.products) ? cached.products : []);
     }
     if (path.startsWith('/dashboard')) {
       const cached = offlineDb.get(offlineDb.KEYS.DASHBOARD);
@@ -91,8 +90,7 @@ function handleOfflineFallback(path, options, originalError) {
     }
     if (path.startsWith('/sales')) {
       const cached = offlineDb.get(offlineDb.KEYS.SALES);
-      if (cached) return { ...cached, _isOffline: true };
-      return { sales: [], totalSalesCount: 0, _isOffline: true };
+      return Array.isArray(cached) ? cached : (Array.isArray(cached?.sales) ? cached.sales : []);
     }
     if (path.startsWith('/analytics/predictive-restock')) {
       const cached = offlineDb.get(offlineDb.KEYS.PREDICTIONS);
@@ -254,11 +252,12 @@ export async function getProducts(params = {}) {
 
   const qs = query.toString() ? `?${query.toString()}` : '';
   const data = await request(`/products${qs}`);
+  const list = Array.isArray(data) ? data : (Array.isArray(data?.products) ? data.products : []);
 
   if (!data._isOffline) {
-    offlineDb.set(offlineDb.KEYS.PRODUCTS, data);
+    offlineDb.set(offlineDb.KEYS.PRODUCTS, list);
   }
-  return data;
+  return list;
 }
 
 export const getProductByBarcode = (barcode) => request(`/products/barcode/${encodeURIComponent(barcode)}`);
@@ -284,11 +283,12 @@ export async function getSales(params = {}) {
 
   const qs = query.toString() ? `?${query.toString()}` : '';
   const data = await request(`/sales${qs}`);
+  const list = Array.isArray(data) ? data : (Array.isArray(data?.sales) ? data.sales : []);
 
   if (!data._isOffline) {
-    offlineDb.set(offlineDb.KEYS.SALES, data);
+    offlineDb.set(offlineDb.KEYS.SALES, list);
   }
-  return data;
+  return list;
 }
 
 export const recordSale = (productId, quantity, barcode = '') =>

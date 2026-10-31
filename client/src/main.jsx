@@ -3,6 +3,20 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import './styles.css';
 
+// Proactively sanitize any legacy or malformed localStorage cache on startup
+try {
+  const p = localStorage.getItem('stockwise_cache_products');
+  if (p) {
+    const parsed = JSON.parse(p);
+    const data = parsed && parsed.data !== undefined ? parsed.data : parsed;
+    if (!Array.isArray(data) && (!data || !Array.isArray(data.products))) {
+      localStorage.removeItem('stockwise_cache_products');
+    }
+  }
+} catch (e) {
+  try { localStorage.removeItem('stockwise_cache_products'); } catch (err) {}
+}
+
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);

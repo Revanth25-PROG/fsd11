@@ -36,13 +36,9 @@ router.get('/', async (req, res) => {
       Product.countDocuments(filter)
     ]);
 
-    res.json({
-      products,
-      totalCount,
-      businessId,
-      maxItemsLimit: MAX_ITEMS_PER_BUSINESS,
-      remainingSlots: Math.max(0, MAX_ITEMS_PER_BUSINESS - totalCount)
-    });
+    res.set('X-Total-Count', totalCount);
+    res.set('X-Max-Limit', MAX_ITEMS_PER_BUSINESS);
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Could not load products: ' + error.message });
   }
