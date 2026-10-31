@@ -1,10 +1,7 @@
 import { offlineDb } from './offlineDb.js';
 
-// Dynamically choose API base: use relative path if on vite dev proxy (port 5173), otherwise direct
-const API_URL =
-  typeof window !== 'undefined' && window.location.port === '5173'
-    ? '/api'
-    : 'http://localhost:5000/api';
+// Always connect directly to the Express backend API
+const API_URL = 'http://localhost:5000/api';
 
 // Current session configuration
 let currentRole = typeof localStorage !== 'undefined' ? localStorage.getItem('stockwise_user_role') || 'admin' : 'admin';
@@ -28,7 +25,7 @@ export function getSessionUser() {
   };
 }
 
-// Master request wrapper with 2500ms fast timeout to completely eliminate UI freeze / lag
+// Master request wrapper with 2500ms fast timeout to guarantee 0 UI lag
 async function request(path, options = {}) {
   const headers = {
     'Content-Type': 'application/json',
@@ -39,7 +36,6 @@ async function request(path, options = {}) {
   };
 
   const controller = new AbortController();
-  // 2.5 second timeout prevents any network stall or frozen buttons
   const timeoutId = setTimeout(() => controller.abort(), 2500);
 
   try {
@@ -51,6 +47,11 @@ async function request(path, options = {}) {
 
     clearTimeout(timeoutId);
 
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      return handleOfflineFallback(path, options, new Error('Non-JSON response'));
+    }
+
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message || 'Server returned an error.');
@@ -58,19 +59,7 @@ async function request(path, options = {}) {
     return data;
   } catch (error) {
     clearTimeout(timeoutId);
-
-    const isNetworkError =
-      error.name === 'AbortError' ||
-      !navigator.onLine ||
-      error.message.includes('Failed to fetch') ||
-      error.message.includes('NetworkError') ||
-      error.message.includes('network') ||
-      error.message.includes('aborted');
-
-    if (isNetworkError) {
-      return handleOfflineFallback(path, options, error);
-    }
-    throw error;
+    return handleOfflineFallback(path, options, error);
   }
 }
 
@@ -91,6 +80,7 @@ function handleOfflineFallback(path, options, originalError) {
       return {
         totalProducts: 0,
         totalUnits: 0,
+        inventoryValue: 0,
         lowStockProducts: [],
         totalSales: 0,
         todaySales: 0,
@@ -122,6 +112,15 @@ function handleOfflineFallback(path, options, originalError) {
         _isOffline: true
       };
     }
+    if (path.startsWith('/products/barcode/')) {
+      const barcode = decodeURIComponent(path.replace('/products/barcode/', ''));
+      const cached = offlineDb.get(offlineDb.KEYS.PRODUCTS);
+      if (cached && Array.isArray(cached.products)) {
+        const found = cached.products.find((p) => p.barcode === barcode);
+        if (found) return found;
+      }
+      throw new Error(`Product with barcode "${barcode}" not found in local cache.`);
+    }
   }
 
   // 2. POST /products (Add product offline)
@@ -132,6 +131,7 @@ function handleOfflineFallback(path, options, originalError) {
       name: payload.name || 'Untitled',
       category: payload.category || 'Other',
       barcode: payload.barcode || '',
+      sku: payload.sku || '',
       price: Number(payload.price || 0),
       costPrice: Number(payload.costPrice || 0),
       quantity: Number(payload.quantity || 0),

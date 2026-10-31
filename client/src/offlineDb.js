@@ -1,5 +1,5 @@
 // Offline-first storage and synchronization layer
-// Uses localStorage with IndexedDB fallback for fast synchronous access and reliable persistence
+// Uses localStorage with robust schema sanitization
 
 const STORAGE_KEYS = {
   PRODUCTS: 'stockwise_cache_products',
@@ -22,13 +22,35 @@ export const offlineDb = {
     }
   },
 
-  // Get cached data
+  // Get cached data with auto-sanitization to prevent type mismatch crashes
   get(key) {
     try {
       const raw = localStorage.getItem(key);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      return parsed.data;
+      const data = parsed && parsed.data !== undefined ? parsed.data : parsed;
+
+      // Sanitize products data
+      if (key === STORAGE_KEYS.PRODUCTS) {
+        if (Array.isArray(data)) return { products: data, totalCount: data.length };
+        if (data && Array.isArray(data.products)) return data;
+        if (data && typeof data === 'object') {
+          const list = Object.values(data).filter(
+            (x) => x && typeof x === 'object' && (x.name || x._id)
+          );
+          return { products: list, totalCount: list.length };
+        }
+        return { products: [], totalCount: 0 };
+      }
+
+      // Sanitize sales data
+      if (key === STORAGE_KEYS.SALES) {
+        if (Array.isArray(data)) return { sales: data, totalSalesCount: data.length };
+        if (data && Array.isArray(data.sales)) return data;
+        return { sales: [], totalSalesCount: 0 };
+      }
+
+      return data;
     } catch (e) {
       return null;
     }
@@ -48,7 +70,7 @@ export const offlineDb = {
     const queue = this.getQueue();
     const item = {
       id: 'queue_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-      action, // e.g. { type: 'SALE', payload: { productId, quantity } }
+      action,
       timestamp: new Date().toISOString()
     };
     queue.push(item);
@@ -65,6 +87,5 @@ export const offlineDb = {
     localStorage.removeItem(STORAGE_KEYS.OFFLINE_QUEUE);
   },
 
-  // Quick helper keys
   KEYS: STORAGE_KEYS
 };

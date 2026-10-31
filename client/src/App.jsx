@@ -115,12 +115,24 @@ export default function App() {
         getPredictiveRestock({ days: 14 })
       ]);
 
-      const productList = productRes.products || (Array.isArray(productRes) ? productRes : []);
+      const rawProducts = productRes?.products || productRes;
+      const productList = Array.isArray(rawProducts)
+        ? rawProducts
+        : (rawProducts && typeof rawProducts === 'object'
+            ? Object.values(rawProducts).filter((x) => x && typeof x === 'object' && (x.name || x._id))
+            : []);
       setProducts(productList);
-      setDashboard(dashboardRes);
-      setSales(salesRes.sales || (Array.isArray(salesRes) ? salesRes : []));
-      setTrends(trendsRes);
-      setPredictionsData(predictionsRes);
+      setDashboard(dashboardRes || {});
+
+      const rawSales = salesRes?.sales || salesRes;
+      const salesList = Array.isArray(rawSales)
+        ? rawSales
+        : (rawSales && typeof rawSales === 'object'
+            ? Object.values(rawSales).filter((x) => x && typeof x === 'object' && (x.productName || x._id))
+            : []);
+      setSales(salesList);
+      setTrends(trendsRes || { salesTrend: [], stockHealth: {} });
+      setPredictionsData(predictionsRes || { summary: {}, predictions: [] });
 
       if (productRes._isOffline || dashboardRes._isOffline) {
         setIsOfflineData(true);
@@ -140,18 +152,37 @@ export default function App() {
     loadData();
   }, [loadData, currentRole]);
 
-  const categories = useMemo(() => ['All categories', ...new Set(products.map((p) => p.category))], [products]);
+  const safeProducts = useMemo(() => {
+    if (Array.isArray(products)) return products;
+    if (products && typeof products === 'object') {
+      return Object.values(products).filter((x) => x && typeof x === 'object' && (x.name || x._id));
+    }
+    return [];
+  }, [products]);
+
+  const safeSales = useMemo(() => {
+    if (Array.isArray(sales)) return sales;
+    if (sales && typeof sales === 'object') {
+      return Object.values(sales).filter((x) => x && typeof x === 'object' && (x.productName || x._id));
+    }
+    return [];
+  }, [sales]);
+
+  const categories = useMemo(() => {
+    return ['All categories', ...new Set(safeProducts.map((p) => p?.category).filter(Boolean))];
+  }, [safeProducts]);
 
   const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const q = search.toLowerCase();
+    return safeProducts.filter((product) => {
+      if (!product || !product.name) return false;
+      const q = (search || '').toLowerCase();
       const matchesSearch =
         product.name.toLowerCase().includes(q) ||
         (product.barcode && product.barcode.toLowerCase().includes(q));
       const matchesCategory = category === 'All categories' || product.category === category;
       return matchesSearch && matchesCategory;
     });
-  }, [products, search, category]);
+  }, [safeProducts, search, category]);
 
   function showNotice(message) {
     setNotice(message);
@@ -507,7 +538,7 @@ export default function App() {
                     </button>
                   </div>
                   <ProductTable
-                    products={products.slice(0, 5)}
+                    products={safeProducts.slice(0, 5)}
                     onEdit={openEditProduct}
                     onDelete={handleDeleteProduct}
                     onSell={(p) => {
@@ -517,7 +548,7 @@ export default function App() {
                     currentRole={currentRole}
                     compact
                   />
-                  {products.length === 0 && !loading && <EmptyProducts onAdd={openAddProduct} />}
+                  {safeProducts.length === 0 && !loading && <EmptyProducts onAdd={openAddProduct} />}
                 </div>
 
                 {/* Low Stock Alerts Attention Panel */}
@@ -591,7 +622,7 @@ export default function App() {
                     </button>
                   </div>
                 </div>
-                <SalesTable sales={sales.slice(0, 5)} />
+                <SalesTable sales={safeSales.slice(0, 5)} />
               </section>
             </>
           )}
@@ -625,7 +656,7 @@ export default function App() {
                 <div className="table-heading">
                   <div>
                     <h2>All products ({displayedProducts.length})</h2>
-                    <p>Capacity: {products.length} / {(dashboard.maxItemsLimit || 100000).toLocaleString()} items</p>
+                    <p>Capacity: {safeProducts.length} / {(dashboard.maxItemsLimit || 100000).toLocaleString()} items</p>
                   </div>
                   <span className="table-label">CATALOGUE</span>
                 </div>
@@ -716,12 +747,12 @@ export default function App() {
               <section className="panel full-table-panel">
                 <div className="table-heading">
                   <div>
-                    <h2>Recent transactions ({sales.length})</h2>
+                    <h2>Recent transactions ({safeSales.length})</h2>
                     <p>High-throughput indexed sales entries.</p>
                   </div>
                   <span className="table-label">SALES LEDGER</span>
                 </div>
-                <SalesTable sales={sales} />
+                <SalesTable sales={safeSales} />
               </section>
             </>
           )}
@@ -757,7 +788,7 @@ export default function App() {
 
       {showSaleForm && (
         <SaleForm
-          products={products}
+          products={safeProducts}
           preselectedProduct={preselectedSaleProduct}
           onSave={handleRecordSale}
           onClose={() => {
